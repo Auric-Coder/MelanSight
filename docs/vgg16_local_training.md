@@ -83,17 +83,19 @@ python scripts/verify_environment.py
 
 See the section below, which is updated only from completed runs.
 
-Trained on the RTX 4060 Laptop GPU (CUDA, fp16 AMP); no CPU fallback occurred. Protocol for every condition: batch size 16, Adam lr 1e-4, up to 20 epochs, patience 5, seed 42, `--workers 0`.
+All four conditions were trained on the RTX 4060 Laptop GPU (CUDA, fp16 AMP); no CPU fallback or out-of-memory restart occurred. Protocol for every condition: batch size 16, Adam lr 1e-4, up to 20 epochs, patience 5, seed 42, `--workers 0`.
 
 | Condition | Status | Best val macro F1 (epoch) | Test macro F1 | Test balanced acc. | Mel sensitivity | Mel specificity |
 |---|---|---|---|---|---|---|
-| 1. Cross-entropy, no aug | Completed (early stop at epoch 12) | 0.6275 (7) | 0.5763 | 0.5663 | 0.4821 | 0.9586 |
-| 2. Focal, no aug | **Not run** | - | - | - | - | - |
-| 3. Cross-entropy, aug | **Not run** | - | - | - | - | - |
-| 4. Focal, aug | **Not run** | - | - | - | - | - |
+| 1. Cross-entropy, no aug | Completed (early stop, epoch 12) | 0.6275 (7) | 0.5763 | 0.5663 | 0.4821 | 0.9586 |
+| 2. Focal, no aug | Completed (early stop, epoch 18) | 0.6324 (13) | 0.5746 | 0.5648 | 0.7500 | 0.9112 |
+| 3. Cross-entropy, aug | Completed (early stop, epoch 19) | 0.6744 (14) | 0.6185 | 0.6237 | 0.5893 | 0.9533 |
+| 4. Focal, aug | Completed (early stop, epoch 19) | 0.6414 (14) | 0.6233 | 0.6395 | 0.6071 | 0.9428 |
 
-Condition 1 details: 134,289,223 parameters; checkpoint 537,170,051 bytes; typical epoch about 150 s. The logged `training_seconds` (6,701 s) includes one epoch (11) that took 5,075 s because of a machine stall (probable sleep or throttling), so it overstates compute time. Test per-class results (precision/recall, support): akiec 0.435/0.588 (51), bcc 0.792/0.494 (77), bkl 0.505/0.586 (157), df 0.176/0.273 (22), mel 0.596/0.482 (168), nv 0.894/0.905 (1000), vasc 0.875/0.636 (22). Melanoma specificity is one-vs-rest. Full detail is in `outputs/vgg16/cross_entropy_aug-false/`.
+Test cross-entropy and focal losses are on different scales and must not be compared with each other. Each cell is one seed (42) and one run. With melanoma n=168 in test, one melanoma is about 0.6 percentage points of sensitivity, and differences of a few points between conditions are not shown to exceed run-to-run noise. Observed pattern (not a causal claim): the two augmentation-on runs scored higher on test macro F1 and balanced accuracy than the two augmentation-off runs; focal loss raised melanoma sensitivity without augmentation (0.48 to 0.75) at lower specificity, but not clearly with augmentation.
 
-Limitations: single seed and single run, so differences between conditions may be within run-to-run noise. Validation loss rose from epoch 7 while training loss kept falling, which indicates overfitting. Classes `df` and `vasc` have only 22 test images each, so their metrics are very uncertain. Roughly half of test melanomas were missed. The test split was evaluated once for this condition and was not used for any decision. These numbers are not evidence of clinical utility.
+Condition 1 details (other runs' full metrics are in their `outputs/vgg16/<experiment>/metrics.json`): 134,289,223 parameters; checkpoint 537,170,051 bytes; typical epoch about 150 s. The logged `training_seconds` (6,701 s) includes one epoch (11) that took 5,075 s because of a machine stall (probable sleep or throttling), so it overstates compute time. Test per-class results (precision/recall, support): akiec 0.435/0.588 (51), bcc 0.792/0.494 (77), bkl 0.505/0.586 (157), df 0.176/0.273 (22), mel 0.596/0.482 (168), nv 0.894/0.905 (1000), vasc 0.875/0.636 (22). Melanoma specificity is one-vs-rest. Full detail is in `outputs/vgg16/cross_entropy_aug-false/`.
+
+Limitations: single seed and single run, so differences between conditions may be within run-to-run noise. Validation loss rose from epoch 7 while training loss kept falling, which indicates overfitting. Classes `df` and `vasc` have only 22 test images each, so their metrics are very uncertain. Roughly half of test melanomas were missed. The test split was evaluated once per condition and was not used for any decision. These numbers are not evidence of clinical utility.
 
 Tests executed: `python -m pytest tests -q` gave 11 passed; `scripts/audit_data.py` gave 34 passed, 0 failed; GPU smoke run and 1-epoch pilots (batch 8: 186 s/epoch, 2.7 GB peak; batch 16: 159 s/epoch, 3.0 GB peak) completed. Pilot and smoke outputs (`pilot_bs8`, `pilot_bs16`, `smoke_test`) are not results. Grad-CAM generation is not implemented yet; only that the VGG16 target layer (`features[28]`, 512x14x14 output) is reachable was tested.
