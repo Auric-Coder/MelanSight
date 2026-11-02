@@ -39,28 +39,19 @@ Example Training Setup:
 from pathlib import Path
 from typing import Tuple
 
-# Import main components for easy access
-try:
-    from src.data.dataset import SkinLesionDataset, get_dataset
-    from src.data.transforms import (
-        get_train_transforms,
-        get_val_transforms,
-        get_test_transforms,
-        denormalize,
-        IMAGENET_MEAN,
-        IMAGENET_STD,
-        IMAGE_SIZE,
-    )
-    
-    # Import dataloader creation functions
-    try:
-        from src.data.dataloader import get_dataloaders, get_single_loader
-        DATALOADER_AVAILABLE = True
-    except ImportError:
-        DATALOADER_AVAILABLE = False
-except ModuleNotFoundError:
-    # Running directly - imports will be handled by individual modules
-    DATALOADER_AVAILABLE = False
+# Import main components for easy access. Preserve dependency errors so users
+# see the missing package (for example torch) instead of a misleading API error.
+from src.data.dataset import SkinLesionDataset, get_dataset
+from src.data.transforms import (
+    IMAGE_SIZE,
+    IMAGENET_MEAN,
+    IMAGENET_STD,
+    denormalize,
+    get_test_transforms,
+    get_train_transforms,
+    get_val_transforms,
+)
+from src.data.dataloader import get_dataloaders, get_single_loader
 
 
 __all__ = [
@@ -108,12 +99,6 @@ def create_data_loaders(
         >>> from src.data import create_data_loaders
         >>> train_loader, val_loader, test_loader = create_data_loaders()
     """
-    if not DATALOADER_AVAILABLE:
-        raise ImportError(
-            "DataLoader not available. "
-            "Run with: uv run python -m src.data.dataloader"
-        )
-    
     # Check if splits exist
     splits_dir = data_dir / "data" / "splits"
     required_files = ["train.csv", "val.csv", "test.csv"]
@@ -143,12 +128,7 @@ if __name__ == "__main__":
     print("Testing Data Module Imports")
     print("=" * 60)
     
-    print("\nImport mode:")
-    if DATALOADER_AVAILABLE:
-        print("  ✓ Running as package (src.data)")
-    else:
-        print("  ⚠ Running directly (__main__)")
-        print("  Note: Import individual modules for testing")
+    print("\nImport mode: package (src.data)")
     
     print("\nAvailable components:")
     available_count = 0
@@ -164,7 +144,4 @@ if __name__ == "__main__":
     print("\n" + "=" * 60)
     if available_count == len(__all__):
         print("✓ Data module ready!")
-    else:
-        print("⚠ Some components not available")
-        print("  Run as: uv run python -m src.data.dataset")
     print("=" * 60)

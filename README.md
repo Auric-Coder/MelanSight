@@ -478,6 +478,10 @@ skin-lesion-screening/
 
 ---
 
+## Local VGG16 training
+
+The VGG16 trainer supports the four loss/augmentation conditions, validation macro-F1 checkpoint selection, and one held-out test evaluation per run. Windows environment setup (Conda + uv with a CUDA-enabled PyTorch index), commands, artifacts, and measured run status are documented in [docs/vgg16_local_training.md](docs/vgg16_local_training.md). Only runs listed there as completed have results.
+
 ## References
 
 - HAM10000: https://doi.org/10.1038/sdata.2018.161
